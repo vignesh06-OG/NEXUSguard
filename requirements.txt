@@ -1,0 +1,5 @@
+streamlit
+PyGithub
+python-dotenv
+langchain-google-genai
+crewai==0.28.0
