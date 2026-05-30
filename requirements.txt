@@ -2,5 +2,6 @@ streamlit
 crewai==0.28.0
 pydantic==2.13.4
 rich==13.7.0
+setuptools
 PyGithub
 python-dotenv
