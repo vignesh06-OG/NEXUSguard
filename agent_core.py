@@ -97,7 +97,11 @@ def build_review_crew(pr_diff: str, pr_title: str):
         raise ValueError("ChatGoogleGenerativeAI is unavailable or GOOGLE_API_KEY is not set; required to initialize agents' llm")
 
     # Create a single llm instance and bind to all agents to avoid unbound-LLM AttributeErrors
-    llm = ChatGoogleGenerativeAI(api_key=api_key)
+    # Sahi tarika: 'model' parameter zaroori hai
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash", 
+    google_api_key=api_key
+)
 
     security_agent = Agent(
         role="Senior Application Security Engineer",
