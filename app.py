@@ -423,37 +423,40 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # Main Header
-advanced_glow_css = """
+clean_header_css = """
 <style>
-@keyframes cyber-pulse {
-    0% { text-shadow: 0 0 5px #00f0ff, 0 0 10px #00f0ff, 0 0 20px #00b8ff, 0 0 40px #5d00ff; filter: brightness(1.2); }
-    50% { text-shadow: 0 0 2px #00f0ff, 0 0 5px #00f0ff, 0 0 10px #00b8ff, 0 0 20px #5d00ff; filter: brightness(0.85); }
-    100% { text-shadow: 0 0 5px #00f0ff, 0 0 10px #00f0ff, 0 0 20px #00b8ff, 0 0 40px #5d00ff; filter: brightness(1.2); }
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 2rem;
+}
+.custom-logo {
+    width: 55px;
+    height: auto;
+    margin-right: 18px;
+    border-radius: 8px;
 }
 .nexus-pro-title {
-    font-size: 3.5rem !important;
-    font-weight: 900 !important;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 6px;
-    background: linear-gradient(90deg, #00f0ff 0%, #5d00ff 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: cyber-pulse 2.5s ease-in-out infinite;
-    margin-bottom: 0px;
+    font-size: 3rem !important;
+    font-weight: 800 !important;
+    color: #F8FAFC;
+    letter-spacing: 2px;
+    margin: 0;
 }
-.nexus-logo-glow {
-    filter: drop-shadow(0 0 12px #00f0ff) drop-shadow(0 0 25px #5d00ff);
-    animation: cyber-pulse 1.8s ease-in-out infinite alternate;
+.nexus-accent {
+    color: #00f0ff;
 }
 </style>
 """
-st.markdown(advanced_glow_css, unsafe_allow_html=True)
+st.markdown(clean_header_css, unsafe_allow_html=True)
 
 st.markdown(
-    '<div style="text-align: center; padding-bottom: 2rem;">'
-    '<span class="nexus-logo-glow" style="font-size: 3.5rem; vertical-align: middle; margin-right: 15px;">🛡️</span>'
-    '<span class="nexus-pro-title" style="vertical-align: middle;">NEXUSGUARD AI</span>'
+    '<div class="header-container">'
+    '<img src="https://cdn-icons-png.flaticon.com/512/2092/2092663.png" class="custom-logo" alt="Nexus Logo">'
+    '<span class="nexus-pro-title">NEXUS<span class="nexus-accent">GUARD</span> AI</span>'
     '</div>', 
     unsafe_allow_html=True
 )
