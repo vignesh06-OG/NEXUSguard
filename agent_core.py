@@ -90,11 +90,7 @@ def build_review_crew(pr_diff: str, pr_title: str):
     try:
         from langchain_google_genai import ChatGoogleGenerativeAI
     except Exception:
-        # Fallback in case the environment exposes a different import path
-        try:
-            from langchain.chat_models import ChatOpenAI as ChatGoogleGenerativeAI  # type: ignore
-        except Exception:
-            ChatGoogleGenerativeAI = None  # type: ignore
+        ChatGoogleGenerativeAI = None  # type: ignore
 
     api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
     if ChatGoogleGenerativeAI is None or not api_key:
