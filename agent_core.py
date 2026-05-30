@@ -14,6 +14,8 @@ def get_required_env(name: str) -> str:
     if not value:
         raise ValueError(f"Missing required environment variable: {name}")
     return value
+
+
 # Initialize Nexus Token Optimizer
 nexus_engine = NexusDiffOptimizer()
 
@@ -23,14 +25,14 @@ def fetch_open_prs(repo_name: str) -> list[dict]:
     auth = Auth.Token(github_token)
     g = Github(auth=auth)
     repo = g.get_repo(repo_name)
-    prs = repo.get_pulls(state='open', sort='updated')
+    prs = repo.get_pulls(state="open", sort="updated")
 
     result = []
     for pr in prs:
         files_data = []
         total_chars = 0
         MAX_CHARS = 80000
-        
+
         # --- NEW: Telemetry Trackers for NexusPrompt ---
         pr_total_original_tokens = 0
         pr_total_optimized_tokens = 0
@@ -42,7 +44,7 @@ def fetch_open_prs(repo_name: str) -> list[dict]:
                 # 1. Pass the raw patch through Nexus Optimizer
                 nexus_result = nexus_engine.optimize_diff(f.patch)
                 optimized_patch = nexus_result["optimized_diff"]
-                
+
                 # 2. Update our telemetry metrics
                 pr_total_original_tokens += nexus_result.get("original_tokens", 0)
                 pr_total_optimized_tokens += nexus_result.get("optimized_tokens", 0)
@@ -60,22 +62,25 @@ def fetch_open_prs(repo_name: str) -> list[dict]:
                 files_data.append(chunk)
                 total_chars += len(chunk)
 
-        result.append({
-            "number": pr.number,
-            "title": pr.title,
-            "url": pr.html_url,
-            "author": pr.user.login if pr.user else None,
-            "diff": "\n".join(files_data),
-            "pr_object": pr,
-            "telemetry": {
-                "original_tokens": pr_total_original_tokens,
-                "optimized_tokens": pr_total_optimized_tokens,
-                "tokens_saved": pr_total_tokens_saved,
-                "cost_saved_usd": pr_total_cost_saved
+        result.append(
+            {
+                "number": pr.number,
+                "title": pr.title,
+                "url": pr.html_url,
+                "author": pr.user.login if pr.user else None,
+                "diff": "\n".join(files_data),
+                "pr_object": pr,
+                "telemetry": {
+                    "original_tokens": pr_total_original_tokens,
+                    "optimized_tokens": pr_total_optimized_tokens,
+                    "tokens_saved": pr_total_tokens_saved,
+                    "cost_saved_usd": pr_total_cost_saved,
+                },
             }
-        })
+        )
 
     return result
+
 
 def post_review_to_github(pr_object, summary: str, risk_score: int):
     badge = "🔴" if risk_score >= 7 else "🟡" if risk_score >= 4 else "🟢"
@@ -91,7 +96,7 @@ def build_review_crew(pr_diff: str, pr_title: str):
         backstory="You are a battle-hardened AppSec engineer with 12 years of penetration testing experience. You think like an attacker. You know the OWASP Top 10 and CWE Top 25 by heart. You flag hardcoded secrets, injection flaws, auth issues, and insecure dependencies. You are methodical and paranoid by profession.",
         llm="gemini/gemini-2.5-flash",
         verbose=True,
-        allow_delegation=False
+        allow_delegation=False,
     )
 
     quality_agent = Agent(
@@ -100,7 +105,7 @@ def build_review_crew(pr_diff: str, pr_title: str):
         backstory="You are a pragmatic Staff Engineer who has reviewed thousands of PRs. You care about correctness, maintainability, and performance. You catch off-by-one errors, missing error handling, N+1 queries, memory leaks, and violations of DRY/SOLID principles. You do NOT re-flag security issues.",
         llm="gemini/gemini-2.5-flash",
         verbose=True,
-        allow_delegation=False
+        allow_delegation=False,
     )
 
     synthesizer_agent = Agent(
@@ -109,7 +114,7 @@ def build_review_crew(pr_diff: str, pr_title: str):
         backstory="You are a senior engineering manager who writes PR reviews developers actually read and respect. You are direct but constructive. Your output is always clean GitHub Markdown.",
         llm="gemini/gemini-2.5-flash",
         verbose=True,
-        allow_delegation=False
+        allow_delegation=False,
     )
 
     security_task = Task(
@@ -135,7 +140,7 @@ For each FINDING output:
 - EXPLOIT: how an attacker could use this
 - FIX: corrected code snippet""",
         expected_output="Structured security findings with severity, file, line, issue, exploit, and fix for each vulnerability found.",
-        agent=security_agent
+        agent=security_agent,
     )
 
     quality_task = Task(
@@ -161,7 +166,7 @@ For each FINDING output:
 - ISSUE: one sentence description
 - FIX: corrected code snippet""",
         expected_output="Structured quality findings with type, file, line, issue, and fix for each problem found.",
-        agent=quality_agent
+        agent=quality_agent,
     )
 
     synthesis_task = Task(
@@ -198,14 +203,14 @@ Follow this EXACT markdown structure:
 Last line MUST be exactly:
 RISK_SCORE:N""",
         expected_output="Complete GitHub-ready markdown review ending with RISK_SCORE:N on the last line.",
-        agent=synthesizer_agent
+        agent=synthesizer_agent,
     )
 
     crew = Crew(
         agents=[security_agent, quality_agent, synthesizer_agent],
         tasks=[security_task, quality_task, synthesis_task],
         process=Process.sequential,
-        verbose=True
+        verbose=True,
     )
 
     return crew
@@ -227,7 +232,7 @@ def run_full_review(repo_name: str, post_to_github: bool = True):
         if "RISK_SCORE:" in output_str:
             try:
                 score_part = output_str.split("RISK_SCORE:")[-1].strip()
-                risk_score = int(''.join(filter(str.isdigit, score_part[:3])))
+                risk_score = int("".join(filter(str.isdigit, score_part[:3])))
                 risk_score = max(0, min(10, risk_score))
             except (ValueError, IndexError):
                 pass
@@ -235,13 +240,15 @@ def run_full_review(repo_name: str, post_to_github: bool = True):
         if post_to_github:
             post_review_to_github(pr["pr_object"], output_str, risk_score)
 
-        results.append({
-            "pr_number": pr["number"],
-            "pr_title": pr["title"],
-            "pr_url": pr["url"],
-            "author": pr["author"],
-            "review": output_str,
-            "risk_score": risk_score
-        })
+        results.append(
+            {
+                "pr_number": pr["number"],
+                "pr_title": pr["title"],
+                "pr_url": pr["url"],
+                "author": pr["author"],
+                "review": output_str,
+                "risk_score": risk_score,
+            }
+        )
 
     return results
