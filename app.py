@@ -374,23 +374,13 @@ if "total_cost_saved" not in st.session_state:
 
 # Sidebar
 with st.sidebar:
-    st.markdown("""
-    <div style='text-align:center; padding: 20px 0 10px 0;'>
-        <div style='font-family: Orbitron, sans-serif; font-size: 20px; color: #06b6d4; 
-        text-shadow: 0 0 20px rgba(6,182,212,0.9), 0 0 40px rgba(6,182,212,0.4); 
-        letter-spacing: 4px; font-weight: 900;'>
-        🛡️ NEXUSGUARD
-        </div>
-        <div style='font-family: JetBrains Mono, monospace; font-size: 9px; 
-        color: #1e3a5f; letter-spacing: 3px; margin-top: 6px;'>
-        SECURITY INTELLIGENCE v3.0
-        </div>
-        <div style='margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 6px;'>
-            <span class='pulse-dot'></span>
-            <span style='font-family: JetBrains Mono, monospace; font-size: 10px; color: #22c55e; letter-spacing: 2px;'>ONLINE</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.sidebar.markdown(
+        '<div style="display: flex; align-items: center; padding-bottom: 10px; margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">'
+        '<img src="https://cdn-icons-png.flaticon.com/512/2092/2092663.png" style="width: 35px; height: auto; border-radius: 6px; margin-right: 12px;" alt="Logo">'
+        '<span style="font-size: 1.6rem; font-weight: 800; color: #F8FAFC; letter-spacing: 1.5px; margin: 0;">NEXUS<span style="color: #00f0ff;">GUARD</span></span>'
+        '</div>', 
+        unsafe_allow_html=True
+    )
     
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("<p style='font-family: JetBrains Mono, monospace; font-size: 9px; color: #1e3a5f; letter-spacing: 2px; margin-bottom: 8px;'>TARGET REPOSITORY</p>", unsafe_allow_html=True)
