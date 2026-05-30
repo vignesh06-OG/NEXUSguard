@@ -1,5 +1,4 @@
 import os
-from unittest import result
 from github import Github, Auth
 from dotenv import load_dotenv
 from nexus_optimizer import NexusDiffOptimizer
@@ -45,17 +44,10 @@ def fetch_open_prs(repo_name: str) -> list[dict]:
                 optimized_patch = nexus_result["optimized_diff"]
                 
                 # 2. Update our telemetry metrics
-               for f in pr.get_files():
-            if f.patch and total_chars < MAX_CHARS:
-                # 1. Pass the raw patch through Nexus Optimizer
-                nexus_result = nexus_engine.optimize_diff(f.patch)
-                optimized_patch = nexus_result["optimized_diff"]
-                
-                # 2. Update our telemetry metrics
-                pr_total_original_tokens += nexus_result["original_tokens"]
-                pr_total_optimized_tokens += nexus_result["optimized_tokens"]
-                pr_total_tokens_saved += nexus_result["tokens_saved"]
-                pr_total_cost_saved += nexus_result["cost_saved_usd"]
+                pr_total_original_tokens += nexus_result.get("original_tokens", 0)
+                pr_total_optimized_tokens += nexus_result.get("optimized_tokens", 0)
+                pr_total_tokens_saved += nexus_result.get("tokens_saved", 0)
+                pr_total_cost_saved += nexus_result.get("cost_saved_usd", 0.0)
 
                 # 3. Create chunk using the OPTIMIZED patch safely
                 chunk = (
@@ -67,8 +59,14 @@ def fetch_open_prs(repo_name: str) -> list[dict]:
                 )
                 files_data.append(chunk)
                 total_chars += len(chunk)
+
+        result.append({
+            "number": pr.number,
+            "title": pr.title,
+            "url": pr.html_url,
+            "author": pr.user.login if pr.user else None,
+            "diff": "\n".join(files_data),
             "pr_object": pr,
-            # 4. Attach telemetry to the final output so UI can read it
             "telemetry": {
                 "original_tokens": pr_total_original_tokens,
                 "optimized_tokens": pr_total_optimized_tokens,
