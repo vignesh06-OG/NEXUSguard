@@ -86,12 +86,28 @@ def post_review_to_github(pr_object, summary: str, risk_score: int):
 
 
 def build_review_crew(pr_diff: str, pr_title: str):
+    # Initialize LLM using Google Generative (langchain wrapper)
+    try:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+    except Exception:
+        # Fallback in case the environment exposes a different import path
+        try:
+            from langchain.chat_models import ChatOpenAI as ChatGoogleGenerativeAI  # type: ignore
+        except Exception:
+            ChatGoogleGenerativeAI = None  # type: ignore
+
+    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+    if ChatGoogleGenerativeAI is None or not api_key:
+        raise ValueError("ChatGoogleGenerativeAI is unavailable or GOOGLE_API_KEY is not set; required to initialize agents' llm")
+
+    # Create a single llm instance and bind to all agents to avoid unbound-LLM AttributeErrors
+    llm = ChatGoogleGenerativeAI(api_key=api_key)
 
     security_agent = Agent(
         role="Senior Application Security Engineer",
         goal="Find every exploitable security vulnerability in the code diff.",
         backstory="You are a battle-hardened AppSec engineer with 12 years of penetration testing experience. You think like an attacker. You know the OWASP Top 10 and CWE Top 25 by heart. You flag hardcoded secrets, injection flaws, auth issues, and insecure dependencies. You are methodical and paranoid by profession.",
-        llm="gemini/gemini-2.5-flash",
+        llm=llm,
         verbose=True,
         allow_delegation=False,
     )
@@ -100,7 +116,7 @@ def build_review_crew(pr_diff: str, pr_title: str):
         role="Staff Software Engineer — Code Quality Specialist",
         goal="Identify logic bugs, performance issues, and code smell in the diff.",
         backstory="You are a pragmatic Staff Engineer who has reviewed thousands of PRs. You care about correctness, maintainability, and performance. You catch off-by-one errors, missing error handling, N+1 queries, memory leaks, and violations of DRY/SOLID principles. You do NOT re-flag security issues.",
-        llm="gemini/gemini-2.5-flash",
+        llm=llm,
         verbose=True,
         allow_delegation=False,
     )
@@ -109,7 +125,7 @@ def build_review_crew(pr_diff: str, pr_title: str):
         role="Engineering Manager — PR Review Synthesizer",
         goal="Synthesize all findings into a clear, structured, GitHub-ready review.",
         backstory="You are a senior engineering manager who writes PR reviews developers actually read and respect. You are direct but constructive. Your output is always clean GitHub Markdown.",
-        llm="gemini/gemini-2.5-flash",
+        llm=llm,
         verbose=True,
         allow_delegation=False,
     )
