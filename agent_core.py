@@ -41,17 +41,14 @@ def fetch_open_prs(repo_name: str) -> list[dict]:
 
         for f in pr.get_files():
             if f.patch and total_chars < MAX_CHARS:
-                # 1. Pass the raw patch through Nexus Optimizer
                 nexus_result = nexus_engine.optimize_diff(f.patch)
                 optimized_patch = nexus_result["optimized_diff"]
 
-                # 2. Update our telemetry metrics
                 pr_total_original_tokens += nexus_result.get("original_tokens", 0)
                 pr_total_optimized_tokens += nexus_result.get("optimized_tokens", 0)
                 pr_total_tokens_saved += nexus_result.get("tokens_saved", 0)
                 pr_total_cost_saved += nexus_result.get("cost_saved_usd", 0.0)
 
-                # 3. Create chunk using the OPTIMIZED patch safely
                 chunk = (
                     f"### File: `{f.filename}`\n"
                     f"**Status:** {f.status}\n\n"
