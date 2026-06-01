@@ -1,4 +1,5 @@
-﻿import os
+﻿import asyncio
+import os
 from dotenv import load_dotenv
 from github import Auth, Github
 from nexus_optimizer import NexusDiffOptimizer
@@ -100,6 +101,14 @@ def post_review_to_github(pr_object, summary: str, risk_score: int):
 
 def build_review_crew(pr_diff: str, pr_title: str):
     api_key = get_google_api_key()
+
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            raise RuntimeError("closed loop")
+    except (RuntimeError, AssertionError):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
