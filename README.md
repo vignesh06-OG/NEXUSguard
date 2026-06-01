@@ -1,43 +1,40 @@
 # 🛡️ NEXUSguard AI
+**Intelligent Multi-Agent PR Reviewer & Token Optimizer**
 
-NEXUSguard AI is an autonomous application security engine that integrates directly into your GitHub workflow. It automatically scans Pull Requests for security vulnerabilities, calculates risk scores, and provides actionable, line-by-line feedback to developers—all powered by Gemini 1.5 Flash.
+[![Built with Streamlit](https://img.shields.io/badge/Built_with-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit)](https://streamlit.io/)
+[![Powered by CrewAI](https://img.shields.io/badge/Powered_by-CrewAI-black?style=for-the-badge)](https://www.crewai.com/)
+[![LLM: Gemini](https://img.shields.io/badge/LLM-Google_Gemini-8E75B2?style=for-the-badge&logo=google)](https://deepmind.google/technologies/gemini/)
+[![Hackathon](https://img.shields.io/badge/Open_Source-Hackathon_2026-brightgreen?style=for-the-badge)](https://oshack.xyz/)
 
-## 🚀 Features
-- **Autonomous Security Scanning:** Automatically analyzes PR diffs to identify exploitable vulnerabilities (SQLi, Command Injection, Secrets, etc.).
-- **Smart Risk Scoring:** Assigns a 0-10 risk score to every PR, helping teams prioritize critical fixes.
-- **Auto-Updating PR Comments:** Posts a professional security report directly to the PR. If you update the code, NEXUSguard edits its own comment to keep the conversation clean.
-- **Interactive Dashboard:** Real-time visibility into your repo's security posture.
+> **Live Demo:** [🔗 Click here to view the NEXUSguard Dashboard](https://nexusguard.streamlit.app/) *(Insert your actual Streamlit link here)*
+
+## 🚀 The Vision
+In the modern CI/CD pipeline, reviewing Pull Requests (PRs) for security vulnerabilities and logical errors takes immense developer hours. Furthermore, running large language models on huge codebases often results in massive token wastage and high API costs. 
+
+**NEXUSguard AI** solves both problems simultaneously. It is an autonomous, multi-agent system that deeply analyzes GitHub PRs, catches security risks, and actively optimizes prompt token usage before querying the LLM—saving both **Time** and **Compute Cost**.
+
+---
+
+## ✨ Key Features
+- **🤖 Multi-Agent Architecture:** Utilizes `CrewAI` to deploy specialized agents (Security Analyst, Code Optimizer, and Review Summarizer) working in tandem.
+- **🔍 Automated PR Scanning:** Directly fetches open Pull Requests from GitHub and runs a comprehensive vulnerability scan.
+- **📉 Token & Cost Optimization:** Integrated with our custom token-management logic to mathematically reduce input tokens without losing context, significantly reducing Gemini API costs.
+- **📊 Interactive Dashboard:** A clean, real-time Streamlit UI providing instant feedback, Risk Scores, and detailed PR telemetry.
+- **🛡️ Failsafe Executions:** Built-in error handling and graceful fallbacks for API throttling and authentication limits.
+
+---
 
 ## 🛠️ Tech Stack
-- **AI Core:** Gemini 1.5 Flash (via LangChain Google GenAI)
-- **Agentic Workflow:** CrewAI for automated security reasoning
-- **Frontend:** Streamlit for real-time dashboarding
-- **Infrastructure:** GitHub API (PyGithub) for seamless PR integration
+* **Frontend:** Python, Streamlit
+* **AI & Orchestration:** CrewAI, Google Gemini (`langchain-google-genai`)
+* **Version Control Integration:** PyGithub
+* **Environment Management:** Python `python-dotenv`, Streamlit Secrets
 
-## 🏗️ How it works
-1. **Trigger:** Click "Scan All Open PRs" or trigger via Webhooks.
-2. **Analysis:** The AI agent analyzes the `diff`, identifies patterns, and evaluates risk.
-3. **Report:** Findings are formatted into a clean Markdown table and posted/updated on GitHub.
-   
-⚡ Automated Security Analysis
-NEXUSguard supports GitHub Webhooks for event-driven security scanning.
+---
 
-Setup: Deploy webhook_listener.py on a cloud service (e.g., Render/Railway).
-## Status: Active Submission
+## 💻 Local Setup & Installation
 
-Config: Set WEBHOOK_SECRET in your environment.
-
-GitHub: Configure your repository webhook to point to the listener URL.
-
-
-## 🚀 Setup Instructions
-1. **Clone the repo:** `git clone https://github.com/vignesh06-OG/nexusguard-test`
-2. **Install requirements:** `pip install -r requirements.txt`
-3. **Configure Secrets:** Add these to your Streamlit Cloud secrets:
-   ```toml
-   GOOGLE_API_KEY = "your_gemini_api_key"
-   GITHUB_TOKEN = "your_github_personal_access_token"
-4. Deploy: Connect your repository to Streamlit Cloud and click deploy!
-
-🔐 Security & Safety
-NEXUSguard uses strict safety filters to handle potentially sensitive code diffs while ensuring robust vulnerability detection and preventing AI model misuse.
+**1. Clone the repository**
+```bash
+git clone [https://github.com/vignesh06-OG/NEXUSguard.git](https://github.com/vignesh06-OG/NEXUSguard.git)
+cd NEXUSguard
