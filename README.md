@@ -23,6 +23,7 @@ NEXUSguard AI is an autonomous application security engine that integrates direc
 NEXUSguard supports GitHub Webhooks for event-driven security scanning.
 
 Setup: Deploy webhook_listener.py on a cloud service (e.g., Render/Railway).
+## Status: Active Submission
 
 Config: Set WEBHOOK_SECRET in your environment.
 
