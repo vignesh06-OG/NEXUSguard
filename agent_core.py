@@ -15,8 +15,18 @@ except ImportError:
     from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
 
 load_dotenv()
+import streamlit as st
 import os
 
+# Streamlit Cloud ke secrets ko environment mein inject karne ka bridge
+try:
+    if "GOOGLE_API_KEY" in st.secrets:
+        os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
+    if "GITHUB_TOKEN" in st.secrets:
+        os.environ["GITHUB_TOKEN"] = st.secrets["GITHUB_TOKEN"]
+except Exception:
+    pass # Agar local pe chala rahe ho toh error nahi dega
+import os
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
