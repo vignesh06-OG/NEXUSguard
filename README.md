@@ -38,8 +38,5 @@ GitHub: Configure your repository webhook to point to the listener URL.
    GITHUB_TOKEN = "your_github_personal_access_token"
 4. Deploy: Connect your repository to Streamlit Cloud and click deploy!
 
-🛡️ Security
-NEXUSguard uses strict safety filters to handle potentially sensitive code diffs while ensuring robust vulnerability detection.
-   
-   
-   
+🔐 Security & Safety
+NEXUSguard uses strict safety filters to handle potentially sensitive code diffs while ensuring robust vulnerability detection and preventing AI model misuse.
