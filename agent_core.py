@@ -89,15 +89,52 @@ def fetch_open_prs(repo_name: str) -> list[dict]:
     return result
 
 
-def post_review_to_github(pr_object, summary: str, risk_score: int):
+def post_review_to_github(pr_object, comment_body: str):
+    """Post or update a review comment on the PR.
+
+    If a previous comment from the bot 'NEXUSguard' exists, update it instead of
+    creating a new comment to avoid spam.
+    """
+    try:
+        # Check existing issue comments for author 'NEXUSguard' or body marker
+        for c in pr_object.get_issue_comments():
+            try:
+                author = getattr(c.user, "login", None)
+                if author and author.lower() == "nexusguard":
+                    c.edit(comment_body)
+                    return
+                # fallback: if the comment body contains the NEXUSguard marker, update it
+                if "NEXUSguard" in (c.body or ""):
+                    c.edit(comment_body)
+                    return
+            except Exception:
+                # ignore individual comment errors
+                continue
+
+        # No existing comment found; create a new one
+        pr_object.create_issue_comment(comment_body)
+    except Exception:
+        # Swallow exceptions to avoid failing the review loop; logging could be added
+        return
+
+
+def format_review_markdown(output_str: str, risk_score: int, pr_title: str | None = None, pr_url: str | None = None) -> str:
+    """Return a concise Markdown-formatted review for posting to GitHub."""
+    header = "## NEXUSguard Automated Review"
     badge = "🔴" if risk_score >= 7 else "🟡" if risk_score >= 4 else "🟢"
-    comment_body = (
-        f"## 🛡️ CodeGuard AI Review {badge}\n\n"
-        f"**Risk Score: {risk_score}/10**\n\n"
-        f"{summary}\n\n"
-        f"---\n*🤖 Automated review by CodeGuard AI — Powered by Gemini + CrewAI*"
-    )
-    pr_object.create_issue_comment(comment_body)
+    title_line = f"**PR:** [{pr_title}]({pr_url})\n\n" if pr_title and pr_url else ""
+
+    # Truncate very large outputs for comment body safety
+    body = output_str or ""
+    if len(body) > 12000:
+        body = body[:12000] + "\n\n*(truncated)*"
+
+    replaced_body = body.replace("\n", "<br/>")
+    table = f"| Risk Score | Summary |\n|---:|---|\n| {risk_score}/10 | {replaced_body} |\n"
+
+    footer = "---\n*🤖 Automated review by NEXUSguard — Powered by Gemini + CrewAI*"
+
+    return "\n\n".join([header, title_line, f"**Result:** {badge}", table, footer])
 
 
 def build_review_crew(pr_diff: str, pr_title: str):
@@ -319,7 +356,8 @@ def run_full_review(repo_name: str, post_to_github: bool = True):
                 risk_score = 0
 
         if post_to_github:
-            post_review_to_github(pr["pr_object"], output_str, risk_score)
+            md = format_review_markdown(output_str, risk_score, pr.get("title"), pr.get("url"))
+            post_review_to_github(pr["pr_object"], md)
 
         # Ensure consistent dictionary structure for successful runs
         results.append(
