@@ -1,5 +1,11 @@
 import asyncio
+import os
 import sys
+import time
+
+import streamlit as st
+from dotenv import load_dotenv
+from agent_core import run_full_review
 
 # Windows par ye zaroori hai, Cloud par bhi safety ke liye
 if sys.platform == 'win32':
@@ -7,14 +13,6 @@ if sys.platform == 'win32':
 else:
     # Yeh line `uvloop` ke conflict ko bypass karti hai
     asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
-
-import streamlit as st
-# ... baki imports
-import streamlit as st
-import os
-import time
-from dotenv import load_dotenv
-from agent_core import run_full_review
 
 load_dotenv()
 

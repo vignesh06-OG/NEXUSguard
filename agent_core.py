@@ -1,4 +1,4 @@
-import os
+﻿import os
 from dotenv import load_dotenv
 from github import Auth, Github
 from nexus_optimizer import NexusDiffOptimizer
@@ -7,14 +7,22 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 load_dotenv()
 
-os.environ["GOOGLE_API_KEY"] = os.getenv("GEMINI_API_KEY", "")
-
 
 def get_required_env(name: str) -> str:
     value = os.getenv(name)
     if not value:
         raise ValueError(f"Missing required environment variable: {name}")
     return value
+
+
+def get_google_api_key() -> str:
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if api_key:
+        return api_key
+    api_key = os.getenv("GEMINI_API_KEY")
+    if api_key:
+        return api_key
+    raise ValueError("GOOGLE_API_KEY is not set in environment variables.")
 
 
 # Initialize Nexus Token Optimizer
@@ -91,15 +99,12 @@ def post_review_to_github(pr_object, summary: str, risk_score: int):
 
 
 def build_review_crew(pr_diff: str, pr_title: str):
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise ValueError("GOOGLE_API_KEY is not set in environment variables.")
+    api_key = get_google_api_key()
 
     llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
-    google_api_key=api_key,
-    convert_system_message_to_human=True # Yeh stability deta hai
-)
+        model="gemini-1.5-flash",
+        google_api_key=api_key,
+    )
 
     security_agent = Agent(
         role="Senior Application Security Engineer",
@@ -269,6 +274,7 @@ def run_full_review(repo_name: str, post_to_github: bool = True):
                 "author": pr["author"],
                 "review": output_str,
                 "risk_score": risk_score,
+                "telemetry": pr.get("telemetry", {}),
             }
         )
 

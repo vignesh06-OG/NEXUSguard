@@ -5,7 +5,6 @@ rich==13.7.0
 setuptools==69.5.1
 PyGithub
 python-dotenv
-langchain-google-genai
-grpcio==1.62.3
 langchain-google-genai==1.0.4
+grpcio==1.62.3
 # baaki dependencies...
