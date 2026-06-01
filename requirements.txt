@@ -3,10 +3,10 @@ crewai==0.28.0
 pydantic==2.6.4
 rich==13.7.0
 PyGithub==2.3.0
-python-dotenv==1.0.0  # <--- Ye change kar diya
+python-dotenv==1.0.0
 langchain-google-genai==1.0.4
 langchain==0.1.16
-langchain-core==0.1.42
+langchain-core>=0.1.45
 grpcio==1.62.3
 fastapi==0.110.1
 uvicorn==0.29.0
