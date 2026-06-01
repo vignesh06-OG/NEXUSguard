@@ -6,7 +6,7 @@
 [![LLM: Gemini](https://img.shields.io/badge/LLM-Google_Gemini-8E75B2?style=for-the-badge&logo=google)](https://deepmind.google/technologies/gemini/)
 [![Hackathon](https://img.shields.io/badge/Open_Source-Hackathon_2026-brightgreen?style=for-the-badge)](https://oshack.xyz/)
 
-> **Live Demo:** [🔗 Click here to view the NEXUSguard Dashboard](https://nexusguard.streamlit.app/) *(Insert your actual Streamlit link here)*
+> **Live Demo:** [🔗 Click here to view the NEXUSguard Dashboard](https://nexusguard.streamlit.app/)
 
 ## 🚀 The Vision
 In the modern CI/CD pipeline, reviewing Pull Requests (PRs) for security vulnerabilities and logical errors takes immense developer hours. Furthermore, running large language models on huge codebases often results in massive token wastage and high API costs. 
@@ -37,13 +37,11 @@ In the modern CI/CD pipeline, reviewing Pull Requests (PRs) for security vulnera
 **1. Clone the repository**
 ```bash
 2. Install Dependencies
-
 Bash
 pip install -r requirements.txt
 
 3. Configure Environment Variables
 Create a .env file in the root directory and add your API keys:
-
 Code snippet
 GOOGLE_API_KEY="your_gemini_api_key_here"
 GITHUB_TOKEN="your_github_personal_access_token_here"
