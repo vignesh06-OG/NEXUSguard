@@ -96,9 +96,10 @@ def build_review_crew(pr_diff: str, pr_title: str):
         raise ValueError("GOOGLE_API_KEY is not set in environment variables.")
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
-        api_key=api_key,
-    )
+    model="gemini-1.5-flash",
+    google_api_key=api_key,
+    convert_system_message_to_human=True # Yeh stability deta hai
+)
 
     security_agent = Agent(
         role="Senior Application Security Engineer",

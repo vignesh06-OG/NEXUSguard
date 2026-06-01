@@ -1,3 +1,15 @@
+import asyncio
+import sys
+
+# Windows par ye zaroori hai, Cloud par bhi safety ke liye
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+else:
+    # Yeh line `uvloop` ke conflict ko bypass karti hai
+    asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+
+import streamlit as st
+# ... baki imports
 import streamlit as st
 import os
 import time
