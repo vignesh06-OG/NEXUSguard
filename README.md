@@ -18,7 +18,15 @@ NEXUSguard AI is an autonomous application security engine that integrates direc
 1. **Trigger:** Click "Scan All Open PRs" or trigger via Webhooks.
 2. **Analysis:** The AI agent analyzes the `diff`, identifies patterns, and evaluates risk.
 3. **Report:** Findings are formatted into a clean Markdown table and posted/updated on GitHub.
+   
+⚡ Automated Security Analysis
+NEXUSguard supports GitHub Webhooks for event-driven security scanning.
 
+Setup: Deploy webhook_listener.py on a cloud service (e.g., Render/Railway).
+
+Config: Set WEBHOOK_SECRET in your environment.
+
+GitHub: Configure your repository webhook to point to the listener URL.
 
 
 ## 🚀 Setup Instructions
@@ -28,3 +36,10 @@ NEXUSguard AI is an autonomous application security engine that integrates direc
    ```toml
    GOOGLE_API_KEY = "your_gemini_api_key"
    GITHUB_TOKEN = "your_github_personal_access_token"
+4. Deploy: Connect your repository to Streamlit Cloud and click deploy!
+
+🛡️ Security
+NEXUSguard uses strict safety filters to handle potentially sensitive code diffs while ensuring robust vulnerability detection.
+   
+   
+   
