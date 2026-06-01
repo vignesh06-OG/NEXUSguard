@@ -15,6 +15,8 @@ except ImportError:
     from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
 
 load_dotenv()
+import os
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
