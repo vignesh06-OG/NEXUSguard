@@ -7,7 +7,13 @@ from github import Auth, Github
 from google.ai.generativelanguage_v1beta.types import safety
 from nexus_optimizer import NexusDiffOptimizer
 from crewai import Agent, Crew, Process, Task
-from langchain_google_genai import ChatGoogleGenerativeAI
+
+# agent_core.py Line 10 replacement
+try:
+    from langchain_google_genai import ChatGoogleGenerativeAI
+except ImportError:
+    from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
+
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
