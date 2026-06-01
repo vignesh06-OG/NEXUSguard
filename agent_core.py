@@ -292,34 +292,44 @@ def run_full_review(repo_name: str, post_to_github: bool = True):
         # Run the crew and handle failures gracefully
         try:
             raw_output = crew.kickoff()
-        except Exception:
+            output_str = str(raw_output)
+        except Exception as e:
+            # Ensure consistent result structure on failure
             results.append({
                 "pr_number": pr.get("number"),
                 "pr_title": pr.get("title"),
-                "error": "Agent failed",
+                "pr_url": pr.get("url"),
+                "author": pr.get("author"),
+                "review": "",
+                "summary": "Agent failed",
+                "risk_score": 0,
+                "telemetry": pr.get("telemetry", {}),
+                "error": str(e),
             })
             continue
 
-        output_str = str(raw_output)
-        risk_score = 5
+        # Default risk score to 0 when AI output doesn't include one
+        risk_score = 0
         if "RISK_SCORE:" in output_str:
             try:
                 score_part = output_str.split("RISK_SCORE:")[-1].strip()
                 risk_score = int("".join(filter(str.isdigit, score_part[:3])))
                 risk_score = max(0, min(10, risk_score))
             except (ValueError, IndexError):
-                pass
+                risk_score = 0
 
         if post_to_github:
             post_review_to_github(pr["pr_object"], output_str, risk_score)
 
+        # Ensure consistent dictionary structure for successful runs
         results.append(
             {
-                "pr_number": pr["number"],
-                "pr_title": pr["title"],
-                "pr_url": pr["url"],
-                "author": pr["author"],
+                "pr_number": pr.get("number"),
+                "pr_title": pr.get("title"),
+                "pr_url": pr.get("url"),
+                "author": pr.get("author"),
                 "review": output_str,
+                "summary": output_str,
                 "risk_score": risk_score,
                 "telemetry": pr.get("telemetry", {}),
             }

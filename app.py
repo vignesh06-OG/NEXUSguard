@@ -556,7 +556,7 @@ with tab1:
             results = run_full_review(repo_name, post_to_github=post_gh)
             st.session_state.review_results = results
             st.session_state.active_prs = len(results)
-            bug_count = sum(1 for r in results if r["risk_score"] >= 7)
+            bug_count = sum(1 for r in results if r.get("risk_score", 0) >= 7)
             st.session_state.total_bugs += bug_count
             
             # --- NEW DATA AGGREGATION LOGIC ---
