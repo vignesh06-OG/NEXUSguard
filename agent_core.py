@@ -86,15 +86,29 @@ def post_review_to_github(pr_object, summary: str, risk_score: int):
 
 
 def build_review_crew(pr_diff: str, pr_title: str):
-    # Initialize LLM using Google Generative (langchain wrapper)
-    try:
-        from langchain_google_genai import ChatGoogleGenerativeAI
-    except Exception:
-        ChatGoogleGenerativeAI = None  # type: ignore
+    # API key load karo
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise ValueError("GOOGLE_API_KEY is not set in environment variables.")
 
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
-    if ChatGoogleGenerativeAI is None or not api_key:
-        raise ValueError("ChatGoogleGenerativeAI is unavailable or GOOGLE_API_KEY is not set; required to initialize agents' llm")
+    # LLM initialize karo
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-1.5-flash",
+        api_key=api_key
+    )
+
+    # Security Agent define karo (Indentation dekho, sab ek level pe hai)
+    security_agent = Agent(
+        role="Senior Application Security Engineer",
+        goal="Find every exploitable security vulnerability in the code diff.",
+        backstory="You are a battle-hardened AppSec engineer with 12 years of experience.",
+        llm=llm,
+        verbose=True,
+        allow_delegation=False,
+    )
+    
+    # Baaki ka logic yahan likho...
+    # return crew (jo bhi tera return object hai)
 
     # Create a single llm instance and bind to all agents to avoid unbound-LLM AttributeErrors
     # Sahi tarika: 'model' parameter zaroori hai
