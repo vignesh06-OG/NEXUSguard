@@ -103,6 +103,7 @@ def post_review_to_github(pr_object, summary: str, risk_score: int):
 def build_review_crew(pr_diff: str, pr_title: str):
     api_key = get_google_api_key()
 
+    # Ensure an event loop exists for this thread (thread-safety)
     try:
         loop = asyncio.get_event_loop()
     except RuntimeError:
@@ -113,13 +114,16 @@ def build_review_crew(pr_diff: str, pr_title: str):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
+    # Set safety settings to BLOCK_NONE for all harm categories to avoid blocking
+    safety_settings = {
+        cat: safety.SafetySetting.HarmBlockThreshold.BLOCK_NONE
+        for cat in safety.HarmCategory
+    }
+
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
         google_api_key=api_key,
-        safety_settings={
-            safety.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: safety.SafetySetting.HarmBlockThreshold.BLOCK_NONE,
-            safety.HarmCategory.HARM_CATEGORY_HARASSMENT: safety.SafetySetting.HarmBlockThreshold.BLOCK_NONE,
-        },
+        safety_settings=safety_settings,
     )
 
     security_agent = Agent(
@@ -266,8 +270,35 @@ def run_full_review(repo_name: str, post_to_github: bool = True):
 
     results = []
     for pr in prs:
-        crew = build_review_crew(pr["diff"], pr["title"])
-        raw_output = crew.kickoff()
+        # Truncate very large diffs to avoid API request size errors
+        pr_diff = pr.get("diff", "") or ""
+        if len(pr_diff) > 15000:
+            pr_diff = pr_diff[:15000]
+
+        # Build crew with truncated diff
+        crew = build_review_crew(pr_diff, pr["title"])
+
+        # Ensure an event loop exists for this thread before kickoff
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        else:
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+        # Run the crew and handle failures gracefully
+        try:
+            raw_output = crew.kickoff()
+        except Exception:
+            results.append({
+                "pr_number": pr.get("number"),
+                "pr_title": pr.get("title"),
+                "error": "Agent failed",
+            })
+            continue
 
         output_str = str(raw_output)
         risk_score = 5
