@@ -36,5 +36,38 @@ In the modern CI/CD pipeline, reviewing Pull Requests (PRs) for security vulnera
 
 **1. Clone the repository**
 ```bash
+2. Install Dependencies
+
+Bash
+pip install -r requirements.txt
+
+3. Configure Environment Variables
+Create a .env file in the root directory and add your API keys:
+
+Code snippet
+GOOGLE_API_KEY="your_gemini_api_key_here"
+GITHUB_TOKEN="your_github_personal_access_token_here"
+
+4. Run the Application
+Bash
+streamlit run app.py
+
+⚡ Automated Security Analysis
+NEXUSguard supports GitHub Webhooks for event-driven security scanning.
+Setup: Deploy webhook_listener.py on a cloud service (e.g., Render/Railway).
+Config: Set WEBHOOK_SECRET in your environment.
+GitHub: Configure your repository webhook to point to the listener URL.
+
+🔐 Security & Safety
+NEXUSguard uses strict safety filters to handle potentially sensitive code diffs while ensuring robust vulnerability detection and preventing AI model misuse.
+
+🔮 Future Roadmap (Post-Hackathon Goals)
+[ ] Implement deeper Webhook integrations for automated PR triggers.
+
+[ ] Add strict facial consistency mode for visual asset PRs (tracking UI/UX changes).
+
+[ ] Expand the Multi-Access Edge Computing (MEC) simulation features for network-related code reviews.
+
+Built with ❤️ by Vignesh for the Elite Coders Open Source Hackathon 2026.
 git clone [https://github.com/vignesh06-OG/NEXUSguard.git](https://github.com/vignesh06-OG/NEXUSguard.git)
 cd NEXUSguard
