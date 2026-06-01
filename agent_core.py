@@ -7,8 +7,7 @@ from github import Auth, Github
 from google.ai.generativelanguage_v1beta.types import safety
 from nexus_optimizer import NexusDiffOptimizer
 from crewai import Agent, Crew, Process, Task
-from langchain_google_genai import ChatGoogleGenerativeAI, ChatGoogleGenerativeAIError
-
+from langchain_google_genai import ChatGoogleGenerativeAI
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -364,8 +363,8 @@ def run_full_review(repo_name: str, post_to_github: bool = True):
         try:
             raw_output = crew.kickoff()
             output_str = str(raw_output)
-        except ChatGoogleGenerativeAIError as e:
-            logging.error("API authentication or model interaction failed: %s", e)
+        except Exception as e:
+            logging.error("API authentication or model interaction failed for PR %s: %s", pr.get("number"), e)
             results.append({
                 "pr_number": pr.get("number"),
                 "pr_title": pr.get("title"),
@@ -376,20 +375,6 @@ def run_full_review(repo_name: str, post_to_github: bool = True):
                 "risk_score": 0,
                 "telemetry": pr.get("telemetry", {}),
                 "error": "API Authentication Failed",
-            })
-            continue
-        except Exception as e:
-            logging.error("Review crew failed for PR %s: %s", pr.get("number"), e)
-            results.append({
-                "pr_number": pr.get("number"),
-                "pr_title": pr.get("title"),
-                "pr_url": pr.get("url"),
-                "author": pr.get("author"),
-                "review": "",
-                "summary": "Agent failed",
-                "risk_score": 0,
-                "telemetry": pr.get("telemetry", {}),
-                "error": str(e),
             })
             continue
 
