@@ -1,13 +1,30 @@
 ﻿import asyncio
+import importlib
+import logging
 import os
 from dotenv import load_dotenv
 from github import Auth, Github
 from google.ai.generativelanguage_v1beta.types import safety
 from nexus_optimizer import NexusDiffOptimizer
 from crewai import Agent, Crew, Process, Task
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI, ChatGoogleGenerativeAIError
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
+
+def get_api_key(key_name: str) -> str | None:
+    try:
+        st = importlib.import_module("streamlit")
+        secrets = getattr(st, "secrets", {})
+        if secrets:
+            value = secrets.get(key_name)
+            if value:
+                return value
+    except ImportError:
+        pass
+
+    return os.getenv(key_name)
 
 
 def get_required_env(name: str) -> str:
@@ -18,13 +35,13 @@ def get_required_env(name: str) -> str:
 
 
 def get_google_api_key() -> str:
-    api_key = os.getenv("GOOGLE_API_KEY")
+    api_key = get_api_key("GOOGLE_API_KEY")
     if api_key:
         return api_key
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = get_api_key("GEMINI_API_KEY")
     if api_key:
         return api_key
-    raise ValueError("GOOGLE_API_KEY is not set in environment variables.")
+    raise ValueError("API Key missing. Check Streamlit secrets.")
 
 
 # Initialize Nexus Token Optimizer
@@ -139,6 +156,8 @@ def format_review_markdown(output_str: str, risk_score: int, pr_title: str | Non
 
 def build_review_crew(pr_diff: str, pr_title: str):
     api_key = get_google_api_key()
+    if api_key is None:
+        raise ValueError("API Key missing. Check Streamlit secrets.")
 
     # Ensure an event loop exists for this thread (thread-safety)
     try:
@@ -313,7 +332,22 @@ def run_full_review(repo_name: str, post_to_github: bool = True):
             pr_diff = pr_diff[:15000]
 
         # Build crew with truncated diff
-        crew = build_review_crew(pr_diff, pr["title"])
+        try:
+            crew = build_review_crew(pr_diff, pr["title"])
+        except ValueError as e:
+            logging.error("Failed to build review crew for PR %s: %s", pr.get("number"), e)
+            results.append({
+                "pr_number": pr.get("number"),
+                "pr_title": pr.get("title"),
+                "pr_url": pr.get("url"),
+                "author": pr.get("author"),
+                "review": "",
+                "summary": "API Authentication Failed",
+                "risk_score": 0,
+                "telemetry": pr.get("telemetry", {}),
+                "error": str(e),
+            })
+            continue
 
         # Ensure an event loop exists for this thread before kickoff
         try:
@@ -330,8 +364,22 @@ def run_full_review(repo_name: str, post_to_github: bool = True):
         try:
             raw_output = crew.kickoff()
             output_str = str(raw_output)
+        except ChatGoogleGenerativeAIError as e:
+            logging.error("API authentication or model interaction failed: %s", e)
+            results.append({
+                "pr_number": pr.get("number"),
+                "pr_title": pr.get("title"),
+                "pr_url": pr.get("url"),
+                "author": pr.get("author"),
+                "review": "",
+                "summary": "API Authentication Failed",
+                "risk_score": 0,
+                "telemetry": pr.get("telemetry", {}),
+                "error": "API Authentication Failed",
+            })
+            continue
         except Exception as e:
-            # Ensure consistent result structure on failure
+            logging.error("Review crew failed for PR %s: %s", pr.get("number"), e)
             results.append({
                 "pr_number": pr.get("number"),
                 "pr_title": pr.get("title"),
