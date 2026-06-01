@@ -2,6 +2,7 @@
 import os
 from dotenv import load_dotenv
 from github import Auth, Github
+from google.ai.generativelanguage_v1beta.types import safety
 from nexus_optimizer import NexusDiffOptimizer
 from crewai import Agent, Crew, Process, Task
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -104,15 +105,21 @@ def build_review_crew(pr_diff: str, pr_title: str):
 
     try:
         loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            raise RuntimeError("closed loop")
-    except (RuntimeError, AssertionError):
+    except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+    else:
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
 
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
         google_api_key=api_key,
+        safety_settings={
+            safety.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: safety.SafetySetting.HarmBlockThreshold.BLOCK_NONE,
+            safety.HarmCategory.HARM_CATEGORY_HARASSMENT: safety.SafetySetting.HarmBlockThreshold.BLOCK_NONE,
+        },
     )
 
     security_agent = Agent(
