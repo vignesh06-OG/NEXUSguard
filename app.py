@@ -571,6 +571,15 @@ with tab1:
         status_box.markdown('<div class="terminal-box" style="border-left-color:#22c55e;color:#22c55e;">MISSION COMPLETE >> Threat analysis done. Optimization logged. ✓</div>', unsafe_allow_html=True)
         st.rerun()
 
+    if st.button("🚀 Scan All Open PRs", use_container_width=True):
+        with st.spinner("Scanning PRs for security threats..."):
+            try:
+                results = run_full_review("vignesh06-OG/nexusguard-test")
+                st.success("Scan Complete!")
+                st.write(results)
+            except Exception as e:
+                st.error(f"Scan failed: {e}")
+
     if st.session_state.review_results:
         st.markdown("<hr>", unsafe_allow_html=True)
         st.markdown("""

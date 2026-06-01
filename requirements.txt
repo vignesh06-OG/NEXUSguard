@@ -7,4 +7,6 @@ PyGithub
 python-dotenv
 langchain-google-genai==1.0.4
 grpcio==1.62.3
+fastapi
+uvicorn
 # baaki dependencies...
