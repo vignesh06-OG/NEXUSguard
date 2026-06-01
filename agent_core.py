@@ -1,8 +1,9 @@
 import os
-from github import Github, Auth
 from dotenv import load_dotenv
+from github import Auth, Github
 from nexus_optimizer import NexusDiffOptimizer
-from crewai import Agent, Task, Crew, Process
+from crewai import Agent, Crew, Process, Task
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 load_dotenv()
 
@@ -33,7 +34,6 @@ def fetch_open_prs(repo_name: str) -> list[dict]:
         total_chars = 0
         MAX_CHARS = 80000
 
-        # --- NEW: Telemetry Trackers for NexusPrompt ---
         pr_total_original_tokens = 0
         pr_total_optimized_tokens = 0
         pr_total_tokens_saved = 0
@@ -81,46 +81,34 @@ def fetch_open_prs(repo_name: str) -> list[dict]:
 
 def post_review_to_github(pr_object, summary: str, risk_score: int):
     badge = "🔴" if risk_score >= 7 else "🟡" if risk_score >= 4 else "🟢"
-    comment_body = f"## 🛡️ CodeGuard AI Review {badge}\n\n**Risk Score: {risk_score}/10**\n\n{summary}\n\n---\n*🤖 Automated review by CodeGuard AI — Powered by Gemini + CrewAI*"
+    comment_body = (
+        f"## 🛡️ CodeGuard AI Review {badge}\n\n"
+        f"**Risk Score: {risk_score}/10**\n\n"
+        f"{summary}\n\n"
+        f"---\n*🤖 Automated review by CodeGuard AI — Powered by Gemini + CrewAI*"
+    )
     pr_object.create_issue_comment(comment_body)
 
 
 def build_review_crew(pr_diff: str, pr_title: str):
-    # API key load karo
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("GOOGLE_API_KEY is not set in environment variables.")
 
-    # LLM initialize karo
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
-        api_key=api_key
+        api_key=api_key,
     )
-
-    # Security Agent define karo (Indentation dekho, sab ek level pe hai)
-    security_agent = Agent(
-        role="Senior Application Security Engineer",
-        goal="Find every exploitable security vulnerability in the code diff.",
-        backstory="You are a battle-hardened AppSec engineer with 12 years of experience.",
-        llm=llm,
-        verbose=True,
-        allow_delegation=False,
-    )
-    
-    # Baaki ka logic yahan likho...
-    # return crew (jo bhi tera return object hai)
-
-    # Create a single llm instance and bind to all agents to avoid unbound-LLM AttributeErrors
-    # Sahi tarika: 'model' parameter zaroori hai
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash", 
-    google_api_key=api_key
-)
 
     security_agent = Agent(
         role="Senior Application Security Engineer",
         goal="Find every exploitable security vulnerability in the code diff.",
-        backstory="You are a battle-hardened AppSec engineer with 12 years of penetration testing experience. You think like an attacker. You know the OWASP Top 10 and CWE Top 25 by heart. You flag hardcoded secrets, injection flaws, auth issues, and insecure dependencies. You are methodical and paranoid by profession.",
+        backstory=(
+            "You are a battle-hardened AppSec engineer with 12 years of penetration testing experience. "
+            "You think like an attacker. You know the OWASP Top 10 and CWE Top 25 by heart. "
+            "You flag hardcoded secrets, injection flaws, auth issues, and insecure dependencies. "
+            "You are methodical and paranoid by profession."
+        ),
         llm=llm,
         verbose=True,
         allow_delegation=False,
@@ -129,7 +117,12 @@ llm = ChatGoogleGenerativeAI(
     quality_agent = Agent(
         role="Staff Software Engineer — Code Quality Specialist",
         goal="Identify logic bugs, performance issues, and code smell in the diff.",
-        backstory="You are a pragmatic Staff Engineer who has reviewed thousands of PRs. You care about correctness, maintainability, and performance. You catch off-by-one errors, missing error handling, N+1 queries, memory leaks, and violations of DRY/SOLID principles. You do NOT re-flag security issues.",
+        backstory=(
+            "You are a pragmatic Staff Engineer who has reviewed thousands of PRs. "
+            "You care about correctness, maintainability, and performance. "
+            "You catch off-by-one errors, missing error handling, N+1 queries, memory leaks, "
+            "and violations of DRY/SOLID principles. You do NOT re-flag security issues."
+        ),
         llm=llm,
         verbose=True,
         allow_delegation=False,
@@ -138,98 +131,98 @@ llm = ChatGoogleGenerativeAI(
     synthesizer_agent = Agent(
         role="Engineering Manager — PR Review Synthesizer",
         goal="Synthesize all findings into a clear, structured, GitHub-ready review.",
-        backstory="You are a senior engineering manager who writes PR reviews developers actually read and respect. You are direct but constructive. Your output is always clean GitHub Markdown.",
+        backstory=(
+            "You are a senior engineering manager who writes PR reviews developers actually read and respect. "
+            "You are direct but constructive. Your output is always clean GitHub Markdown."
+        ),
         llm=llm,
         verbose=True,
         allow_delegation=False,
     )
 
     security_task = Task(
-        description=f"""Analyze this PR titled "{pr_title}" for security vulnerabilities.
-
-DIFF TO ANALYZE:
-{pr_diff}
-
-Check each category EXPLICITLY and report findings or CLEAN per category:
-1. Injection Flaws (SQL, Command, LDAP, NoSQL)
-2. Hardcoded Secrets / API Keys / Passwords
-3. Broken Authentication or Missing Authorization checks
-4. Sensitive Data Exposure (PII in logs, unencrypted storage)
-5. Insecure Dependencies (suspicious imports)
-6. Missing Input Validation / Sanitization
-7. Insecure Deserialization
-
-For each FINDING output:
-- SEVERITY: [CRITICAL | HIGH | MEDIUM | LOW]
-- FILE: filename
-- LINE: approximate line number
-- ISSUE: one sentence description
-- EXPLOIT: how an attacker could use this
-- FIX: corrected code snippet""",
-        expected_output="Structured security findings with severity, file, line, issue, exploit, and fix for each vulnerability found.",
+        description=(
+            f"Analyze this PR titled \"{pr_title}\" for security vulnerabilities.\n\n"
+            "DIFF TO ANALYZE:\n"
+            f"{pr_diff}\n\n"
+            "Check each category EXPLICITLY and report findings or CLEAN per category:\n"
+            "1. Injection Flaws (SQL, Command, LDAP, NoSQL)\n"
+            "2. Hardcoded Secrets / API Keys / Passwords\n"
+            "3. Broken Authentication or Missing Authorization checks\n"
+            "4. Sensitive Data Exposure (PII in logs, unencrypted storage)\n"
+            "5. Insecure Dependencies (suspicious imports)\n"
+            "6. Missing Input Validation / Sanitization\n"
+            "7. Insecure Deserialization\n\n"
+            "For each FINDING output:\n"
+            "- SEVERITY: [CRITICAL | HIGH | MEDIUM | LOW]\n"
+            "- FILE: filename\n"
+            "- LINE: approximate line number\n"
+            "- ISSUE: one sentence description\n"
+            "- EXPLOIT: how an attacker could use this\n"
+            "- FIX: corrected code snippet"
+        ),
+        expected_output=(
+            "Structured security findings with severity, file, line, issue, exploit, and fix for each vulnerability found."
+        ),
         agent=security_agent,
     )
 
     quality_task = Task(
-        description=f"""Analyze this PR titled "{pr_title}" for code quality issues.
-Do NOT re-report security vulnerabilities.
-
-DIFF TO ANALYZE:
-{pr_diff}
-
-Check for:
-1. Logic bugs and off-by-one errors
-2. Unhandled exceptions / missing try-catch
-3. Functions over 25 lines (complexity smell)
-4. Duplicate code (DRY violations)
-5. Missing type hints or incorrect types
-6. Performance anti-patterns (N+1 queries, blocking I/O, memory leaks)
-7. Dead code or unused imports
-
-For each FINDING output:
-- TYPE: [BUG | PERFORMANCE | STYLE | COMPLEXITY]
-- FILE: filename
-- LINE: approximate line number
-- ISSUE: one sentence description
-- FIX: corrected code snippet""",
-        expected_output="Structured quality findings with type, file, line, issue, and fix for each problem found.",
+        description=(
+            f"Analyze this PR titled \"{pr_title}\" for code quality issues.\n"
+            "Do NOT re-report security vulnerabilities.\n\n"
+            "DIFF TO ANALYZE:\n"
+            f"{pr_diff}\n\n"
+            "Check for:\n"
+            "1. Logic bugs and off-by-one errors\n"
+            "2. Unhandled exceptions / missing try-catch\n"
+            "3. Functions over 25 lines (complexity smell)\n"
+            "4. Duplicate code (DRY violations)\n"
+            "5. Missing type hints or incorrect types\n"
+            "6. Performance anti-patterns (N+1 queries, blocking I/O, memory leaks)\n"
+            "7. Dead code or unused imports\n\n"
+            "For each FINDING output:\n"
+            "- TYPE: [BUG | PERFORMANCE | STYLE | COMPLEXITY]\n"
+            "- FILE: filename\n"
+            "- LINE: approximate line number\n"
+            "- ISSUE: one sentence description\n"
+            "- FIX: corrected code snippet"
+        ),
+        expected_output=(
+            "Structured quality findings with type, file, line, issue, and fix for each problem found."
+        ),
         agent=quality_agent,
     )
 
     synthesis_task = Task(
-        description="""Using the security and quality reports, write the final GitHub PR review.
-
-Follow this EXACT markdown structure:
-
-## Executive Summary
-[2-3 sentence honest assessment]
-
-## Risk Score: X/10
-[One sentence justifying the score]
-
-## 🔴 Must Fix Before Merge
-[ONLY Critical and High items with FILE:LINE format]
-
-## 🟡 Should Fix Soon
-[Medium severity items]
-
-## 🟢 Suggestions (Optional)
-[Low severity items]
-
-## Summary Table
-| Severity | Count | Category |
-|----------|-------|----------|
-| 🔴 Critical | X | Security |
-| 🟠 High | X | Security/Quality |
-| 🟡 Medium | X | Quality |
-| 🟢 Low | X | Style |
-
-## Verdict
-[APPROVE / REQUEST CHANGES / NEEDS DISCUSSION] — [one sentence reason]
-
-Last line MUST be exactly:
-RISK_SCORE:N""",
-        expected_output="Complete GitHub-ready markdown review ending with RISK_SCORE:N on the last line.",
+        description=(
+            "Using the security and quality reports, write the final GitHub PR review.\n\n"
+            "Follow this EXACT markdown structure:\n\n"
+            "## Executive Summary\n"
+            "[2-3 sentence honest assessment]\n\n"
+            "## Risk Score: X/10\n"
+            "[One sentence justifying the score]\n\n"
+            "## 🔴 Must Fix Before Merge\n"
+            "[ONLY Critical and High items with FILE:LINE format]\n\n"
+            "## 🟡 Should Fix Soon\n"
+            "[Medium severity items]\n\n"
+            "## 🟢 Suggestions (Optional)\n"
+            "[Low severity items]\n\n"
+            "## Summary Table\n"
+            "| Severity | Count | Category |\n"
+            "|----------|-------|----------|\n"
+            "| 🔴 Critical | X | Security |\n"
+            "| 🟠 High | X | Security/Quality |\n"
+            "| 🟡 Medium | X | Quality |\n"
+            "| 🟢 Low | X | Style |\n\n"
+            "## Verdict\n"
+            "[APPROVE / REQUEST CHANGES / NEEDS DISCUSSION] — [one sentence reason]\n\n"
+            "Last line MUST be exactly:\n"
+            "RISK_SCORE:N"
+        ),
+        expected_output=(
+            "Complete GitHub-ready markdown review ending with RISK_SCORE:N on the last line."
+        ),
         agent=synthesizer_agent,
     )
 
