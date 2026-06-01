@@ -1,3 +1,16 @@
+import sys
+import types
+
+# --- HACKATHON JUGAAD: Mock pkg_resources to bypass Streamlit 'uv' installer bug ---
+if 'pkg_resources' not in sys.modules:
+    mock_pkg_resources = types.ModuleType('pkg_resources')
+    class MockDistribution:
+        def __init__(self, version):
+            self.version = version
+    mock_pkg_resources.get_distribution = lambda x: MockDistribution("0.28.0")
+    sys.modules['pkg_resources'] = mock_pkg_resources
+# -----------------------------------------------------------------------------------
+
 import asyncio
 import os
 import sys
